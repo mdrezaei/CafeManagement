@@ -123,7 +123,7 @@ Schema scripts are provided in the `database/` directory.
 
 ## License
 
-This project is provided for educational and academic purposes.
+MIT
 
 ---
 
@@ -252,4 +252,4 @@ This project is provided for educational and academic purposes.
 
 ## مجوز
 
-این پروژه برای اهداف آموزشی و دانشگاهی ارائه شده است.
+MIT
