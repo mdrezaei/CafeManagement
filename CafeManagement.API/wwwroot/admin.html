@@ -1,0 +1,739 @@
+﻿<!DOCTYPE html>
+<html lang="fa">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>پنل مدیریت کافه</title>
+    <style>
+        body {
+            font-family: Tahoma, sans-serif;
+            direction: rtl;
+            background: #f0f2f5;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 1200px;
+            margin: 0 auto 20px;
+        }
+
+            .header h1 {
+                margin: 0;
+            }
+
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.2s;
+            margin: 2px;
+        }
+
+        .btn-logout {
+            background: #f44336;
+            color: #fff;
+        }
+
+        .btn-refresh {
+            background: #2196F3;
+            color: #fff;
+        }
+
+        .btn-add {
+            background: #4CAF50;
+            color: #fff;
+        }
+
+        .btn-edit {
+            background: #FF9800;
+            color: #fff;
+        }
+
+        .btn-delete {
+            background: #f44336;
+            color: #fff;
+        }
+
+        .btn-qr {
+            background: #9C27B0;
+            color: #fff;
+        }
+
+        .btn-success {
+            background: #4CAF50;
+            color: #fff;
+        }
+
+        .btn-warning {
+            background: #FF9800;
+            color: #fff;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .tab {
+            padding: 10px 20px;
+            background: #fff;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+            .tab.active {
+                background: #2196F3;
+                color: #fff;
+                border-color: #2196F3;
+            }
+
+        .tab-content {
+            background: #fff;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 0 5px rgba(0,0,0,0.1);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        th, td {
+            padding: 12px;
+            border-bottom: 1px solid #ddd;
+            text-align: center;
+        }
+
+        th {
+            background: #2196F3;
+            color: white;
+        }
+
+        .status-select {
+            padding: 5px;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            position: relative;
+        }
+
+            .modal-content img {
+                max-width: 300px;
+                max-height: 300px;
+            }
+
+        .close-modal {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            font-size: 20px;
+            cursor: pointer;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+            .form-group label {
+                display: block;
+                margin-bottom: 5px;
+                font-weight: bold;
+            }
+
+            .form-group input,
+            .form-group select,
+            .form-group textarea {
+                width: 100%;
+                padding: 10px;
+                border: 1px solid #ccc;
+                border-radius: 5px;
+                box-sizing: border-box;
+            }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>پنل مدیریت کافه</h1>
+        <div>
+            <button class="btn btn-logout" onclick="logout()">خروج</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="tabs">
+            <div class="tab active" onclick="switchTab(event, 'orders')">سفارش‌ها</div>
+            <div class="tab" onclick="switchTab(event, 'tables')">میزها</div>
+            <div class="tab" onclick="switchTab(event, 'menu')">منو</div>
+        </div>
+
+        <!-- بخش سفارش‌ها -->
+        <div id="orders-tab" class="tab-content">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <h2>سفارش‌ها</h2>
+                <button class="btn btn-refresh" onclick="loadOrders()">بروزرسانی</button>
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>شماره میز</th>
+                        <th>مشتری</th>
+                        <th>اقلام</th>
+                        <th>جمع کل</th>
+                        <th>وضعیت</th>
+                        <th>عملیات</th>
+                    </tr>
+                </thead>
+                <tbody id="orders-body">
+                    <tr><td colspan="6">در حال بارگذاری...</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- بخش میزها -->
+        <div id="tables-tab" class="tab-content hidden">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <h2>میزها</h2>
+                <div>
+                    <button class="btn btn-refresh" onclick="loadTables()">بروزرسانی</button>
+                    <button class="btn btn-add" onclick="showAddTableForm()">میز جدید</button>
+                </div>
+            </div>
+            <div id="add-table-form" class="hidden" style="margin-bottom:20px;">
+                <h3>ساخت میز جدید</h3>
+                <div class="form-group">
+                    <label>شماره / نام میز</label>
+                    <input type="text" id="new-table-number" placeholder="مثلاً بالا ۳" />
+                </div>
+                <button class="btn btn-add" onclick="createTable()">ثبت میز</button>
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>شناسه</th>
+                        <th>شماره / نام میز</th>
+                        <th>عملیات</th>
+                    </tr>
+                </thead>
+                <tbody id="tables-body">
+                    <tr><td colspan="3">در حال بارگذاری...</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- بخش منو -->
+        <div id="menu-tab" class="tab-content hidden">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <h2>آیتم‌های منو</h2>
+                <div>
+                    <button class="btn btn-refresh" onclick="loadMenuItems()">بروزرسانی</button>
+                    <button class="btn btn-add" onclick="showAddMenuItemForm()">آیتم جدید</button>
+                </div>
+            </div>
+            <div id="add-menu-item-form" class="hidden" style="margin-bottom:20px;">
+                <h3>افزودن آیتم منو</h3>
+                <div class="form-group">
+                    <label>نام</label>
+                    <input type="text" id="new-menu-name" placeholder="لاته" />
+                </div>
+                <div class="form-group">
+                    <label>قیمت (تومان)</label>
+                    <input type="number" id="new-menu-price" placeholder="120000" />
+                </div>
+                <div class="form-group">
+                    <label>دسته‌بندی</label>
+                    <input type="text" id="new-menu-category" placeholder="نوشیدنی گرم" />
+                </div>
+                <div class="form-group">
+                    <label>توضیحات (اختیاری)</label>
+                    <textarea id="new-menu-description" rows="2"></textarea>
+                </div>
+                <button class="btn btn-add" onclick="createMenuItem()">ثبت آیتم</button>
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>نام</th>
+                        <th>قیمت</th>
+                        <th>دسته‌بندی</th>
+                        <th>توضیحات</th>
+                        <th>موجود</th>
+                        <th>فعال</th>
+                        <th>عملیات</th>
+                    </tr>
+                </thead>
+                <tbody id="menu-body">
+                    <tr><td colspan="7">در حال بارگذاری...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- مودال QR -->
+    <div id="qr-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closeQRModal()">&times;</span>
+            <h3>QR Code میز</h3>
+            <img id="qr-image" src="" alt="QR Code" />
+        </div>
+    </div>
+
+    <script>
+        const token = localStorage.getItem('token');
+        if (!token) {
+            window.location.href = '/login.html';
+        }
+
+        function logout() {
+            localStorage.removeItem('token');
+            window.location.href = '/login.html';
+        }
+
+        function switchTab(event, tab) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
+            document.getElementById(tab + '-tab').classList.remove('hidden');
+            event.currentTarget.classList.add('active');
+            if (tab === 'orders') loadOrders();
+            if (tab === 'tables') loadTables();
+            if (tab === 'menu') loadMenuItems();
+        }
+
+        function authHeaders() {
+            return {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            };
+        }
+
+        // ──────────────────────────────── سفارش‌ها ────────────────────────────────
+
+        async function loadOrders() {
+            const tbody = document.getElementById('orders-body');
+            tbody.innerHTML = '<tr><td colspan="6">در حال بارگذاری...</td></tr>';
+            try {
+                const response = await fetch('/api/admin/MOrder', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (response.status === 401) { logout(); return; }
+                if (!response.ok) throw new Error('خطا در دریافت سفارش‌ها');
+                const orders = await response.json();
+                renderOrders(orders);
+            } catch (error) {
+                tbody.innerHTML = `<tr><td colspan="6">${error.message}</td></tr>`;
+            }
+        }
+
+        function renderOrders(orders) {
+            const tbody = document.getElementById('orders-body');
+            tbody.innerHTML = '';
+            if (orders.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6">سفارشی وجود ندارد.</td></tr>';
+                return;
+            }
+            orders.forEach(order => {
+                const tr = document.createElement('tr');
+                const itemsText = order.orderItems
+                    .map(item => `${item.orderedItemName} × ${item.quantity}`)
+                    .join('، ');
+                tr.innerHTML = `
+                        <td>${order.tableId}</td>
+                        <td>${order.customerName ?? order.customerId ?? 'مهمان'}</td>
+                        <td>${itemsText || '—'}</td>
+                        <td>${order.totalPrice.toLocaleString()} تومان</td>
+                        <td>
+                            <select class="status-select" data-order-id="${order.id}">
+                                <option value="Placed" ${order.status === 'Placed' ? 'selected' : ''}>ثبت شده</option>
+                                <option value="Approved" ${order.status === 'Approved' ? 'selected' : ''}>تایید شده</option>
+                                <option value="Preparing" ${order.status === 'Preparing' ? 'selected' : ''}>در حال آماده‌سازی</option>
+                                <option value="Ready" ${order.status === 'Ready' ? 'selected' : ''}>آماده</option>
+                                <option value="Delivered" ${order.status === 'Delivered' ? 'selected' : ''}>تحویل شده</option>
+                            </select>
+                        </td>
+                        <td>
+                            <button class="btn btn-edit" onclick="updateStatus('${order.id}', this)">ذخیره وضعیت</button>
+                        </td>
+                    `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        async function updateStatus(orderId, button) {
+            const select = button.parentElement.parentElement.querySelector('.status-select');
+            const newStatus = select.value;
+            try {
+                const response = await fetch(`/api/admin/MOrder/${orderId}/status`, {
+                    method: 'PATCH',
+                    headers: authHeaders(),
+                    body: JSON.stringify({ status: newStatus })
+                });
+                if (response.status === 401) { logout(); return; }
+                if (!response.ok) {
+                    const error = await response.text();
+                    alert(error || 'خطا در تغییر وضعیت');
+                    return;
+                }
+                alert('وضعیت سفارش به‌روزرسانی شد.');
+                loadOrders();
+            } catch (error) {
+                alert('خطا در ارتباط با سرور.');
+            }
+        }
+
+        // ──────────────────────────────── میزها ────────────────────────────────
+
+        async function loadTables() {
+            const tbody = document.getElementById('tables-body');
+            tbody.innerHTML = '<tr><td colspan="3">در حال بارگذاری...</td></tr>';
+            try {
+                const response = await fetch('/api/admin/MTable', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (response.status === 401) { logout(); return; }
+                if (!response.ok) throw new Error('خطا در دریافت میزها');
+                const tables = await response.json();
+                renderTables(tables);
+            } catch (error) {
+                tbody.innerHTML = `<tr><td colspan="3">${error.message}</td></tr>`;
+            }
+        }
+
+        function renderTables(tables) {
+            const tbody = document.getElementById('tables-body');
+            tbody.innerHTML = '';
+            if (tables.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="3">میزی وجود ندارد.</td></tr>';
+                return;
+            }
+            tables.forEach(table => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                        <td>${table.id}</td>
+                        <td>${table.tableNumber}</td>
+                        <td>
+                            <button class="btn btn-qr" onclick="showQRCode('${table.id}')">QR Code</button>
+                            <button class="btn btn-edit" onclick="editTable('${table.id}', '${table.tableNumber}')">ویرایش</button>
+                            <button class="btn btn-delete" onclick="deleteTable('${table.id}')">حذف</button>
+                        </td>
+                    `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function showAddTableForm() {
+            document.getElementById('add-table-form').classList.toggle('hidden');
+        }
+
+        async function createTable() {
+            const number = document.getElementById('new-table-number').value.trim();
+            if (!number) {
+                alert('شماره میز را وارد کنید.');
+                return;
+            }
+            try {
+                const response = await fetch('/api/admin/MTable', {
+                    method: 'POST',
+                    headers: authHeaders(),
+                    body: JSON.stringify({ tableNumber: number })
+                });
+                if (response.status === 401) { logout(); return; }
+                if (!response.ok) {
+                    const error = await response.text();
+                    alert(error || 'خطا در ساخت میز');
+                    return;
+                }
+                document.getElementById('new-table-number').value = '';
+                document.getElementById('add-table-form').classList.add('hidden');
+                alert('میز ساخته شد.');
+                loadTables();
+            } catch (error) {
+                alert('خطا در ارتباط با سرور.');
+            }
+        }
+
+        async function editTable(id, currentNumber) {
+            const newNumber = prompt('شماره جدید میز:', currentNumber);
+            if (!newNumber) return;
+            try {
+                const response = await fetch(`/api/admin/MTable/${id}`, {
+                    method: 'PUT',
+                    headers: authHeaders(),
+                    body: JSON.stringify({ tableNumber: newNumber })
+                });
+                if (response.status === 401) { logout(); return; }
+                if (!response.ok) {
+                    const error = await response.text();
+                    alert(error || 'خطا در ویرایش میز');
+                    return;
+                }
+                alert('میز ویرایش شد.');
+                loadTables();
+            } catch (error) {
+                alert('خطا در ارتباط با سرور.');
+            }
+        }
+
+        async function deleteTable(id) {
+            if (!confirm('این میز حذف شود؟')) return;
+            try {
+                const response = await fetch(`/api/admin/MTable/${id}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (response.status === 401) { logout(); return; }
+                if (!response.ok) {
+                    const error = await response.text();
+                    alert(error || 'خطا در حذف میز');
+                    return;
+                }
+                alert('میز حذف شد.');
+                loadTables();
+            } catch (error) {
+                alert('خطا در ارتباط با سرور.');
+            }
+        }
+
+        async function showQRCode(tableId) {
+            try {
+                const response = await fetch(`/api/admin/MTable/${tableId}/qrcode`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (response.status === 401) { logout(); return; }
+                if (!response.ok) {
+                    const error = await response.text();
+                    alert(error || 'خطا در دریافت QR');
+                    return;
+                }
+                const blob = await response.blob();
+                const url = URL.createObjectURL(blob);
+                document.getElementById('qr-image').src = url;
+                document.getElementById('qr-modal').style.display = 'flex';
+            } catch (error) {
+                alert('خطا در ارتباط با سرور.');
+            }
+        }
+
+        function closeQRModal() {
+            document.getElementById('qr-modal').style.display = 'none';
+            document.getElementById('qr-image').src = '';
+        }
+
+        // ──────────────────────────────── منو ────────────────────────────────
+
+        async function loadMenuItems() {
+            const tbody = document.getElementById('menu-body');
+            tbody.innerHTML = '<tr><td colspan="7">در حال بارگذاری...</td></tr>';
+            try {
+                const response = await fetch('/api/admin/MMenuItem', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (response.status === 401) { logout(); return; }
+                if (!response.ok) throw new Error('خطا در دریافت آیتم‌های منو');
+                const items = await response.json();
+                renderMenuItems(items);
+            } catch (error) {
+                tbody.innerHTML = `<tr><td colspan="7">${error.message}</td></tr>`;
+            }
+        }
+
+        function renderMenuItems(items) {
+            const tbody = document.getElementById('menu-body');
+            tbody.innerHTML = '';
+            if (items.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7">آیتمی وجود ندارد.</td></tr>';
+                return;
+            }
+            items.forEach(item => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                        <td>${item.name}</td>
+                        <td>${item.price.toLocaleString()} تومان</td>
+                        <td>${item.category}</td>
+                        <td>${item.description || '—'}</td>
+                        <td>${item.isAvailable ? '✅' : '❌'}</td>
+                        <td>${item.isActive ? '✅' : '❌'}</td>
+                        <td>
+                            <button class="btn btn-edit" onclick="editMenuItem('${item.id}', '${item.name}', ${item.price}, '${item.category}', '${item.description ?? ''}')">ویرایش</button>
+                            <button class="btn btn-warning" onclick="toggleAvailability('${item.id}', ${item.isAvailable})">${item.isAvailable ? 'ناموجود' : 'موجود'}</button>
+                            <button class="btn btn-warning" onclick="toggleActive('${item.id}', ${item.isActive})">${item.isActive ? 'غیرفعال' : 'فعال'}</button>
+                            <button class="btn btn-delete" onclick="deleteMenuItem('${item.id}')">حذف</button>
+                        </td>
+                    `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function showAddMenuItemForm() {
+            document.getElementById('add-menu-item-form').classList.toggle('hidden');
+        }
+
+        async function createMenuItem() {
+            const name = document.getElementById('new-menu-name').value.trim();
+            const price = parseFloat(document.getElementById('new-menu-price').value);
+            const category = document.getElementById('new-menu-category').value.trim();
+            const description = document.getElementById('new-menu-description').value.trim();
+
+            if (!name || !price || !category) {
+                alert('نام، قیمت و دسته‌بندی را وارد کنید.');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/admin/MMenuItem', {
+                    method: 'POST',
+                    headers: authHeaders(),
+                    body: JSON.stringify({ name, price, category, description })
+                });
+                if (response.status === 401) { logout(); return; }
+                if (!response.ok) {
+                    const error = await response.text();
+                    alert(error || 'خطا در ساخت آیتم');
+                    return;
+                }
+                document.getElementById('new-menu-name').value = '';
+                document.getElementById('new-menu-price').value = '';
+                document.getElementById('new-menu-category').value = '';
+                document.getElementById('new-menu-description').value = '';
+                document.getElementById('add-menu-item-form').classList.add('hidden');
+                alert('آیتم منو ساخته شد.');
+                loadMenuItems();
+            } catch (error) {
+                alert('خطا در ارتباط با سرور.');
+            }
+        }
+
+        async function editMenuItem(id, name, price, category, description) {
+            const newName = prompt('نام جدید:', name);
+            const newPrice = prompt('قیمت جدید:', price);
+            const newCategory = prompt('دسته‌بندی جدید:', category);
+            const newDescription = prompt('توضیحات جدید:', description || '');
+
+            if (newName === null || newPrice === null || newCategory === null || newDescription === null) return;
+
+            const body = {
+                name: newName,
+                price: parseFloat(newPrice) || price,
+                category: newCategory,
+                description: newDescription
+            };
+
+            try {
+                const response = await fetch(`/api/admin/MMenuItem/${id}`, {
+                    method: 'PATCH',
+                    headers: authHeaders(),
+                    body: JSON.stringify(body)
+                });
+                if (response.status === 401) { logout(); return; }
+                if (!response.ok) {
+                    const error = await response.text();
+                    alert(error || 'خطا در ویرایش آیتم');
+                    return;
+                }
+                alert('آیتم ویرایش شد.');
+                loadMenuItems();
+            } catch (error) {
+                alert('خطا در ارتباط با سرور.');
+            }
+        }
+
+        async function toggleAvailability(id, currentState) {
+            try {
+                const endpoint = currentState ? 'unavailable' : 'available';
+                const response = await fetch(`/api/admin/MMenuItem/${id}/${endpoint}`, {
+                    method: 'PUT',
+                    headers: authHeaders()
+                });
+                if (response.status === 401) { logout(); return; }
+                if (!response.ok) {
+                    const error = await response.text();
+                    alert(error || 'خطا در تغییر وضعیت موجودی');
+                    return;
+                }
+                loadMenuItems();
+            } catch (error) {
+                alert('خطا در ارتباط با سرور.');
+            }
+        }
+
+        async function toggleActive(id, currentState) {
+            try {
+                const endpoint = currentState ? 'deactivate' : 'activate';
+                const response = await fetch(`/api/admin/MMenuItem/${id}/${endpoint}`, {
+                    method: 'PUT',
+                    headers: authHeaders()
+                });
+                if (response.status === 401) { logout(); return; }
+                if (!response.ok) {
+                    const error = await response.text();
+                    alert(error || 'خطا در تغییر وضعیت فعال');
+                    return;
+                }
+                loadMenuItems();
+            } catch (error) {
+                alert('خطا در ارتباط با سرور.');
+            }
+        }
+
+        async function deleteMenuItem(id) {
+            if (!confirm('این آیتم حذف شود؟')) return;
+            try {
+                const response = await fetch(`/api/admin/MMenuItem/${id}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (response.status === 401) { logout(); return; }
+                if (!response.ok) {
+                    const error = await response.text();
+                    alert(error || 'خطا در حذف آیتم');
+                    return;
+                }
+                alert('آیتم حذف شد.');
+                loadMenuItems();
+            } catch (error) {
+                alert('خطا در ارتباط با سرور.');
+            }
+        }
+
+        // بارگذاری اولیه سفارش‌ها
+        loadOrders();
+    </script>
+</body>
+</html>

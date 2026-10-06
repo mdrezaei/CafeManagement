@@ -1,0 +1,5 @@
+<Solution>
+  <Project Path="CafeManagement.API/CafeManagement.API.csproj" Id="2fb6fc54-86a5-462d-bcab-17899fdc31bd" />
+  <Project Path="CafeManagement.Shared/CafeManagement.Shared.csproj" Id="a3c9d4c9-bc6c-435a-8f24-df0550920b4d" />
+  <Project Path="MenuAndOrdering.API/MenuAndOrdering.API.csproj" />
+</Solution>

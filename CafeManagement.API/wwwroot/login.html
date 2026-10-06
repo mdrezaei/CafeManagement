@@ -1,0 +1,202 @@
+﻿<!DOCTYPE html>
+<html lang="fa">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ورود / ثبت‌نام کارکنان</title>
+    <style>
+        body {
+            font-family: Tahoma, sans-serif;
+            direction: rtl;
+            background: #eee;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .login-box {
+            background: #fff;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            width: 400px;
+            max-width: 100%;
+        }
+
+        h2 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 10px;
+            margin: 8px 0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            box-sizing: border-box;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            background: #2196F3;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 10px;
+        }
+
+        .error {
+            color: red;
+            text-align: center;
+            margin-top: 10px;
+        }
+
+        .switch-link {
+            text-align: center;
+            margin-top: 15px;
+            color: #2196F3;
+            cursor: pointer;
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-box">
+        <!-- بخش ورود -->
+        <div id="login-section">
+            <h2>ورود به پنل مدیریت</h2>
+            <input type="text" id="login-phone" placeholder="شماره تلفن" />
+            <input type="password" id="login-password" placeholder="رمز عبور" />
+            <button onclick="login()">ورود</button>
+            <div class="error" id="login-error"></div>
+            <div class="switch-link" onclick="showRegister()">ساخت حساب کارمند جدید</div>
+        </div>
+
+        <!-- بخش ثبت‌نام کارمند -->
+        <div id="register-section" class="hidden">
+            <h2>ثبت‌نام کارمند</h2>
+            <input type="text" id="reg-name" placeholder="نام و نام خانوادگی" />
+            <input type="text" id="reg-phone" placeholder="شماره تلفن" />
+            <input type="password" id="reg-password" placeholder="رمز عبور" />
+
+            <select id="reg-section">
+                <option value="">-- بخش --</option>
+                <option value="Waiter">گارسون</option>
+                <option value="Barista">باریستا</option>
+                <option value="Chef">آشپز</option>
+                <option value="Cashier">صندوقدار</option>
+                <option value="Buyer">خریدار</option>
+                <option value="Manager">مدیر</option>
+                <option value="Other">سایر</option>
+            </select>
+
+            <select id="reg-level">
+                <option value="">-- سطح --</option>
+                <option value="Intern">کارآموز</option>
+                <option value="Junior">جونیور</option>
+                <option value="Senior">سینیور</option>
+                <option value="Head">سرپرست</option>
+                <option value="Other">سایر</option>
+            </select>
+
+            <button onclick="registerEmployee()">ثبت‌نام</button>
+            <div class="error" id="register-error"></div>
+            <div class="switch-link" onclick="showLogin()">بازگشت به ورود</div>
+        </div>
+    </div>
+
+    <script>
+        function showRegister() {
+            document.getElementById('login-section').classList.add('hidden');
+            document.getElementById('register-section').classList.remove('hidden');
+            document.getElementById('login-error').textContent = '';
+            document.getElementById('register-error').textContent = '';
+        }
+
+        function showLogin() {
+            document.getElementById('register-section').classList.add('hidden');
+            document.getElementById('login-section').classList.remove('hidden');
+            document.getElementById('login-error').textContent = '';
+            document.getElementById('register-error').textContent = '';
+        }
+
+        async function login() {
+            const phone = document.getElementById('login-phone').value.trim();
+            const password = document.getElementById('login-password').value.trim();
+
+            if (!phone || !password) {
+                document.getElementById('login-error').textContent = 'شماره تلفن و رمز را وارد کنید.';
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/auth/employee/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ phoneNumber: phone, password: password })
+                });
+
+                if (!response.ok) {
+                    const error = await response.text();
+                    document.getElementById('login-error').textContent = error || 'ورود ناموفق بود.';
+                    return;
+                }
+
+                const data = await response.json();
+                localStorage.setItem('token', data.token);
+                window.location.href = '/admin.html';
+            } catch (error) {
+                document.getElementById('login-error').textContent = 'خطا در ارتباط با سرور.';
+            }
+        }
+
+        async function registerEmployee() {
+            const name = document.getElementById('reg-name').value.trim();
+            const phone = document.getElementById('reg-phone').value.trim();
+            const password = document.getElementById('reg-password').value.trim();
+            const section = document.getElementById('reg-section').value;
+            const level = document.getElementById('reg-level').value;
+
+            if (!name || !phone || !password || !section || !level) {
+                document.getElementById('register-error').textContent = 'همه فیلدها را پر کنید.';
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/admin/MEmployee', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        name: name,
+                        phoneNumber: phone,
+                        password: password,
+                        section: section,
+                        level: level
+                    })
+                });
+
+                if (!response.ok) {
+                    const error = await response.text();
+                    document.getElementById('register-error').textContent = error || 'ثبت‌نام ناموفق بود.';
+                    return;
+                }
+
+                alert('کارمند با موفقیت ساخته شد. حالا می‌توانید وارد شوید.');
+                showLogin();
+            } catch (error) {
+                document.getElementById('register-error').textContent = 'خطا در ارتباط با سرور.';
+            }
+        }
+    </script>
+</body>
+</html>

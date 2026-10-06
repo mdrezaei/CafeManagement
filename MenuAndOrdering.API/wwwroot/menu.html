@@ -1,0 +1,389 @@
+﻿<!DOCTYPE html>
+<html lang="fa">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>منوی کافه</title>
+    <style>
+        body {
+            font-family: Tahoma, sans-serif;
+            direction: rtl;
+            background: #f7f7f7;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        h1, h2 {
+            text-align: center;
+        }
+
+        .menu-item {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 10px;
+            background: #fff;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+            .menu-item button {
+                background: #4CAF50;
+                color: white;
+                border: none;
+                padding: 8px 16px;
+                border-radius: 4px;
+                cursor: pointer;
+            }
+
+        .cart {
+            margin-top: 30px;
+            padding: 15px;
+            background: #fff;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+
+        .cart-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+            .cart-item button {
+                background: #f44336;
+                color: white;
+                border: none;
+                padding: 4px 10px;
+                border-radius: 4px;
+                cursor: pointer;
+            }
+
+        .cart-total {
+            font-weight: bold;
+            text-align: left;
+            margin-top: 10px;
+        }
+
+        .customer-form {
+            margin-top: 20px;
+            padding: 15px;
+            background: #fff;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+
+            .customer-form input, .customer-form textarea {
+                width: 100%;
+                padding: 10px;
+                margin: 5px 0;
+                border: 1px solid #ccc;
+                border-radius: 4px;
+                box-sizing: border-box;
+            }
+
+            .customer-form button {
+                background: #2196F3;
+                color: white;
+                border: none;
+                padding: 12px;
+                border-radius: 4px;
+                width: 100%;
+                cursor: pointer;
+                font-size: 16px;
+            }
+
+        .track-order {
+            margin-top: 30px;
+            padding: 15px;
+            background: #fff;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+
+            .track-order input {
+                width: 70%;
+                padding: 10px;
+                margin: 5px 0;
+                border: 1px solid #ccc;
+                border-radius: 4px;
+                box-sizing: border-box;
+            }
+
+            .track-order button {
+                background: #9C27B0;
+                color: #fff;
+                border: none;
+                padding: 10px 20px;
+                border-radius: 4px;
+                cursor: pointer;
+            }
+
+        .track-result {
+            margin-top: 15px;
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>منوی کافه</h1>
+        <div id="menu-list"></div>
+
+        <!-- سبد خرید -->
+        <div class="cart">
+            <h2>سبد خرید</h2>
+            <div id="cart-items"></div>
+            <div class="cart-total" id="cart-total">جمع کل: ۰ تومان</div>
+        </div>
+
+        <!-- فرم ثبت سفارش -->
+        <div class="customer-form">
+            <h2>تکمیل سفارش</h2>
+            <input type="text" id="customer-name" placeholder="نام شما" />
+            <input type="text" id="customer-phone" placeholder="شماره تلفن" />
+            <textarea id="customer-note" placeholder="یادداشت سفارش (اختیاری)" rows="3"></textarea>
+            <button onclick="placeOrder()">ثبت سفارش</button>
+        </div>
+
+        <!-- پیگیری سفارش‌های امروز -->
+        <div class="track-order">
+            <h2>پیگیری سفارش‌های امروز</h2>
+            <input type="text" id="track-phone" placeholder="شماره تلفن" />
+            <button onclick="trackOrders()">مشاهده سفارش‌ها</button>
+            <div id="track-result" class="track-result"></div>
+        </div>
+    </div>
+
+    <script>
+        // ── دریافت tableId از URL ─────────────────────────
+        const urlParams = new URLSearchParams(window.location.search);
+        const tableId = urlParams.get('tableId') || '';
+
+        if (!tableId) {
+            document.body.innerHTML = '<h2 style="text-align:center;">شماره میز نامعتبر است</h2>';
+        } else {
+            fetchMenu(tableId);
+        }
+
+        // ── state سبد خرید ─────────────────────────────────
+        let cart = [];   // [{ menuItemId, name, price, quantity }]
+
+        // ── دریافت منو از API ─────────────────────────────
+        async function fetchMenu(tableId) {
+            try {
+                const response = await fetch(`/api/menu?tableId=${tableId}`);
+                if (!response.ok) throw new Error('خطا در دریافت منو');
+                const data = await response.json();
+                renderMenu(data);
+            } catch (error) {
+                document.getElementById('menu-list').innerHTML =
+                    `<p style="color:red;">${error.message}</p>`;
+            }
+        }
+
+        // ── نمایش منو ──────────────────────────────────────
+        function renderMenu(items) {
+            const list = document.getElementById('menu-list');
+            list.innerHTML = '';
+            items.forEach(item => {
+                const div = document.createElement('div');
+                div.className = 'menu-item';
+                div.innerHTML = `
+                        <div>
+                            <strong>${item.name}</strong>
+                            <p style="margin:5px 0;">${item.description || ''}</p>
+                            <small>${item.price.toLocaleString()} تومان</small>
+                        </div>
+                        <button onclick="addToCart('${item.id}', '${item.name}', ${item.price})">افزودن</button>
+                    `;
+                list.appendChild(div);
+            });
+        }
+
+        // ── افزودن به سبد خرید ─────────────────────────────
+        function addToCart(menuItemId, name, price) {
+            const existing = cart.find(i => i.menuItemId === menuItemId);
+            if (existing) {
+                existing.quantity++;
+            } else {
+                cart.push({ menuItemId, name, price, quantity: 1 });
+            }
+            renderCart();
+        }
+
+        // ── تغییر تعداد در سبد ─────────────────────────────
+        function changeQuantity(menuItemId, delta) {
+            const item = cart.find(i => i.menuItemId === menuItemId);
+            if (!item) return;
+            item.quantity += delta;
+            if (item.quantity <= 0) {
+                cart = cart.filter(i => i.menuItemId !== menuItemId);
+            }
+            renderCart();
+        }
+
+        // ── حذف کامل آیتم از سبد ───────────────────────────
+        function removeItem(menuItemId) {
+            cart = cart.filter(i => i.menuItemId !== menuItemId);
+            renderCart();
+        }
+
+        // ── نمایش سبد خرید ─────────────────────────────────
+        function renderCart() {
+            const container = document.getElementById('cart-items');
+            container.innerHTML = '';
+            if (cart.length === 0) {
+                container.innerHTML = '<p>سبد خرید خالی است.</p>';
+            } else {
+                cart.forEach(item => {
+                    const div = document.createElement('div');
+                    div.className = 'cart-item';
+                    div.innerHTML = `
+                            <span>${item.name} (${item.price.toLocaleString()} تومان)</span>
+                            <span>
+                                <button onclick="changeQuantity('${item.menuItemId}', 1)">+</button>
+                                <span style="margin:0 10px;">${item.quantity}</span>
+                                <button onclick="changeQuantity('${item.menuItemId}', -1)">-</button>
+                                <button onclick="removeItem('${item.menuItemId}')">حذف</button>
+                            </span>
+                        `;
+                    container.appendChild(div);
+                });
+            }
+            updateTotal();
+        }
+
+        // ── به‌روزرسانی جمع کل ─────────────────────────────
+        function updateTotal() {
+            const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+            document.getElementById('cart-total').textContent = `جمع کل: ${total.toLocaleString()} تومان`;
+        }
+
+        // ── ثبت سفارش ──────────────────────────────────────
+        async function placeOrder() {
+            const name = document.getElementById('customer-name').value.trim();
+            const phone = document.getElementById('customer-phone').value.trim();
+            const note = document.getElementById('customer-note').value.trim();
+
+            if (!name || !phone) {
+                alert('لطفاً نام و شماره تلفن را وارد کنید.');
+                return;
+            }
+
+            if (cart.length === 0) {
+                alert('سبد خرید خالی است.');
+                return;
+            }
+
+            try {
+                // 1️⃣ ایجاد/گرفتن مشتری
+                const customerResponse = await fetch(
+                    `/api/customer/by-phone/${encodeURIComponent(phone)}?name=${encodeURIComponent(name)}`
+                );
+                if (!customerResponse.ok) {
+                    throw new Error('خطا در ایجاد مشتری');
+                }
+                const customer = await customerResponse.json();
+
+                // 2️⃣ ساخت درخواست سفارش
+                const orderRequest = {
+                    customerId: customer.id,
+                    tableId: parseInt(tableId),
+                    items: cart.map(item => ({
+                        menuItemId: item.menuItemId,
+                        quantity: item.quantity
+                    })),
+                    customerNote: note || null
+                };
+
+                const orderResponse = await fetch('/api/order', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(orderRequest)
+                });
+
+                if (!orderResponse.ok) {
+                    const errorText = await orderResponse.text();
+                    throw new Error(errorText || 'خطا در ثبت سفارش');
+                }
+
+                const order = await orderResponse.json();
+                alert('سفارش شما با موفقیت ثبت شد. ✅');
+
+                // پاک کردن سبد و فرم
+                cart = [];
+                renderCart();
+                document.getElementById('customer-name').value = '';
+                document.getElementById('customer-phone').value = '';
+                document.getElementById('customer-note').value = '';
+            } catch (error) {
+                alert(`خطا: ${error.message}`);
+            }
+        }
+
+        // ── پیگیری سفارش‌های امروز ─────────────────────────
+        async function trackOrders() {
+            const phone = document.getElementById('track-phone').value.trim();
+            const resultDiv = document.getElementById('track-result');
+
+            if (!phone) {
+                resultDiv.innerHTML = '<span style="color:red;">شماره تلفن را وارد کنید.</span>';
+                return;
+            }
+
+            resultDiv.innerHTML = 'در حال جستجو...';
+            try {
+                const response = await fetch(`/api/order/track?phoneNumber=${encodeURIComponent(phone)}`);
+                if (!response.ok) {
+                    if (response.status === 404) {
+                        resultDiv.innerHTML = '<span style="color:orange;">سفارشی برای امروز یافت نشد.</span>';
+                    } else {
+                        const error = await response.text();
+                        resultDiv.innerHTML = `<span style="color:red;">${error}</span>`;
+                    }
+                    return;
+                }
+                const orders = await response.json();
+
+                if (!orders.length) {
+                    resultDiv.innerHTML = '<span style="color:orange;">سفارشی برای امروز یافت نشد.</span>';
+                    return;
+                }
+
+                let html = '<ul>';
+                orders.forEach(order => {
+                    const itemsText = order.orderItems
+                        .map(item => `${item.orderedItemName} × ${item.quantity}`)
+                        .join('، ');
+                    html += `
+                            <li style="margin-bottom:10px;">
+                                <strong>وضعیت:</strong> ${order.status}<br>
+                                <strong>اقلام:</strong> ${itemsText || '—'}<br>
+                                <strong>جمع کل:</strong> ${order.totalPrice.toLocaleString()} تومان
+                            </li>
+                        `;
+                });
+                html += '</ul>';
+                resultDiv.innerHTML = html;
+            } catch (error) {
+                resultDiv.innerHTML = '<span style="color:red;">خطا در ارتباط با سرور.</span>';
+            }
+        }
+
+        // ── اجرای اولیه ────────────────────────────────────
+        renderCart();
+    </script>
+</body>
+</html>
